@@ -37,9 +37,9 @@ var (
 	user        = flag.String("user", "root", "TiDB user")
 	password    = flag.String("password", "", "TiDB password")
 	concurrency = flag.Int("concurrent", 10000, "Concurrency")
+	numAccounts = flag.Int("num-accts", 100000000, "number of accounts")
 )
 
-const numAccounts = 100000000
 
 func mustExec(db *sql.DB, query string, args ...interface{}) sql.Result {
 	r, err := db.Exec(query, args...)
@@ -65,7 +65,7 @@ func (c *BankCase) Initialize(ctx context.Context, db *sql.DB) error {
 	var wg sync.WaitGroup
 
 	batchSize := 100
-	jobCount := numAccounts / batchSize
+	jobCount := *numAccounts / batchSize
 	wg.Add(jobCount)
 
 	ch := make(chan int, jobCount)
@@ -152,11 +152,11 @@ func (c *BankCase) tryDrop(db *sql.DB) bool {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if count == numAccounts {
+	if count == *numAccounts {
 		return false
 	}
 
-	log.Infof("we need %d accounts but got %d, re-initialize the data again", numAccounts, count)
+	log.Infof("we need %d accounts but got %d, re-initialize the data again", *numAccounts, count)
 	mustExec(db, "drop table if exists accounts")
 	return true
 }
@@ -170,7 +170,7 @@ func (c *BankCase) verify(db *sql.DB) {
 		return
 	}
 
-	check := numAccounts * 1000
+	check := *numAccounts * 1000
 	if total != check {
 		log.Fatalf("[%s] total must %d, but got %d", c, check, total)
 	}
@@ -179,7 +179,7 @@ func (c *BankCase) verify(db *sql.DB) {
 func (c *BankCase) moveMoney(db *sql.DB) {
 	var from, to int
 	for {
-		from, to = rand.Intn(numAccounts), rand.Intn(numAccounts)
+		from, to = rand.Intn(*numAccounts), rand.Intn(*numAccounts)
 		if from == to {
 			continue
 		}
