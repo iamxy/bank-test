@@ -1,5 +1,5 @@
 # bank-test
-A little test program for tidb, verify concurrent trasactions.
+A small transaction test for tidb
 
 1. import data.
 2. transfer between bank accounts.
